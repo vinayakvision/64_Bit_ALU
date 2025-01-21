@@ -1,0 +1,81 @@
+module ALU (
+    input [63:0] A,           // 64-bit input A
+    input [63:0] B,           // 64-bit input B
+    input [3:0] opcode,       // 4-bit opcode to select the operation
+    input clk,                // Clock input
+    input reset,              // Reset signal
+    output reg [63:0] result, // 64-bit result output
+    output reg zero,          // Zero flag
+    output reg carry,         // Carry flag
+    output reg overflow,      // Overflow flag
+    output reg negative       // Negative flag
+);
+
+    // Operation codes (Opcodes)
+    localparam ADD = 4'b0000,
+               SUB = 4'b0001,
+               MUL = 4'b0010,
+               DIV = 4'b0011,
+               AND_OP = 4'b0100,
+               OR_OP = 4'b0101,
+               XOR_OP = 4'b0110,
+               NOT_OP = 4'b0111,
+               LSHIFT = 4'b1000,
+               RSHIFT = 4'b1001,
+               ARSHIFT = 4'b1010,
+               GT = 4'b1011,
+               LT = 4'b1100,
+               EQ = 4'b1101;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            result <= 64'b0;
+            zero <= 0;
+            carry <= 0;
+            overflow <= 0;
+            negative <= 0;
+        end
+        else begin
+            case (opcode)
+                ADD: begin
+                    {carry, result} = A + B; // Addition with carry
+                    overflow = (A[63] & B[63] & ~result[63]) | (~A[63] & ~B[63] & result[63]);
+                end
+                SUB: begin
+                    {carry, result} = A - B; // Subtraction with carry
+                    overflow = (A[63] & ~B[63] & ~result[63]) | (~A[63] & B[63] & result[63]);
+                end
+                MUL: begin
+                    result = A * B; // Multiplication
+                    overflow = 0; // Multiplication overflow is a different case
+                end
+                DIV: begin
+                    if (B != 0) begin
+                        result = A / B; // Division
+                        overflow = 0;
+                    end
+                    else begin
+                        result = 64'b0; // Handle division by zero
+                        overflow = 1;
+                    end
+                end
+                AND_OP: result = A & B; // Bitwise AND
+                OR_OP: result = A | B; // Bitwise OR
+                XOR_OP: result = A ^ B; // Bitwise XOR
+                NOT_OP: result = ~A; // Bitwise NOT
+                LSHIFT: result = A << 1; // Logical left shift
+                RSHIFT: result = A >> 1; // Logical right shift
+                ARSHIFT: result = $signed(A) >>> 1; // Arithmetic right shift
+                GT: result = (A > B) ? 64'b1 : 64'b0; // Greater Than comparison
+                LT: result = (A < B) ? 64'b1 : 64'b0; // Less Than comparison
+                EQ: result = (A == B) ? 64'b1 : 64'b0; // Equality comparison
+                default: result = 64'b0; // Default case
+            endcase
+
+            // Set status flags
+            zero = (result == 0);
+            negative = result[63]; // Negative flag based on MSB
+        end
+    end
+
+endmodule

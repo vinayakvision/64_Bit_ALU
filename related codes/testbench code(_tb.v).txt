@@ -1,0 +1,95 @@
+module ALU_tb;
+    reg [63:0] A, B;           // 64-bit input
+    reg [3:0] opcode;          // 4-bit opcode
+    reg clk, reset;            // Clock and Reset
+    wire [63:0] result;        // 64-bit result output
+    wire zero, carry, overflow, negative; // Status flags
+
+    // Instantiate the ALU module
+    ALU uut (
+        .A(A),
+        .B(B),
+        .opcode(opcode),
+        .clk(clk),
+        .reset(reset),
+        .result(result),
+        .zero(zero),
+        .carry(carry),
+        .overflow(overflow),
+        .negative(negative)
+    );
+
+    // Generate clock signal
+    always begin
+        #5 clk = ~clk;  // Toggle every 5 time units (100 MHz clock)
+    end
+
+    // Test the ALU operations
+    initial begin
+        // Initialize signals
+        clk = 0;
+        reset = 0;
+        A = 64'b0;
+        B = 64'b0;
+        opcode = 4'b0000;
+
+        // Apply reset
+        reset = 1;
+        #10 reset = 0;
+
+        // Test ADD operation
+        A = 64'h0000000000000010;  // 16
+        B = 64'h0000000000000020;  // 32
+        opcode = 4'b0000;          // ADD
+        #20;
+
+        // Test SUB operation
+        A = 64'h0000000000000020;  // 32
+        B = 64'h0000000000000010;  // 16
+        opcode = 4'b0001;          // SUB
+        #20;
+
+        // Test AND operation
+        A = 64'hF0F0F0F0F0F0F0F0;  // 64-bit A
+        B = 64'h0F0F0F0F0F0F0F0F;  // 64-bit B
+        opcode = 4'b0100;          // AND
+        #20;
+
+        // Test OR operation
+        A = 64'hF0F0F0F0F0F0F0F0;
+        B = 64'h0F0F0F0F0F0F0F0F;
+        opcode = 4'b0101;          // OR
+        #20;
+
+        // Test XOR operation
+        A = 64'hF0F0F0F0F0F0F0F0;
+        B = 64'h0F0F0F0F0F0F0F0F;
+        opcode = 4'b0110;          // XOR
+        #20;
+
+        // Test Shift operation
+        A = 64'hF0F0F0F0F0F0F0F0;
+        B = 64'h0000000000000001;  // Shift by 1
+        opcode = 4'b1000;          // LSHIFT
+        #20;
+
+        // Test Comparison (GT, LT, EQ)
+        A = 64'h10;
+        B = 64'h20;
+        opcode = 4'b1011;          // GT (Greater Than)
+        #20;
+
+        A = 64'h20;
+        B = 64'h10;
+        opcode = 4'b1100;          // LT (Less Than)
+        #20;
+
+        A = 64'h10;
+        B = 64'h10;
+        opcode = 4'b1101;          // EQ (Equality)
+        #20;
+
+        // End simulation
+        $finish;
+    end
+endmodule
